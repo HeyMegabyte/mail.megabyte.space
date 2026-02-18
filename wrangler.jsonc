@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "listmonk-mail",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-04-03",
+  "account_id": "84fa0d1b16ff8086dd958c468ce7fd59",
+  "containers": [
+    {
+      "class_name": "ListmonkContainer",
+      "image": "./Dockerfile",
+      "max_instances": 1,
+      "instance_type": "standard-1"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "class_name": "ListmonkContainer",
+        "name": "LISTMONK"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "new_sqlite_classes": ["ListmonkContainer"],
+      "tag": "v1"
+    }
+  ],
+  "vars": {
+    "DB_HOST": "db.lwrwigxubhlbhzolnodb.supabase.co",
+    "DB_PORT": "5432",
+    "DB_USER": "postgres",
+    "DB_NAME": "postgres",
+    "DB_SSL_MODE": "require",
+    "ADMIN_USER": "admin",
+    "ADMIN_PASSWORD": "ListmonkAdmin2024"
+  },
+  "routes": [
+    {
+      "pattern": "mail.megabyte.space",
+      "custom_domain": true
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}
