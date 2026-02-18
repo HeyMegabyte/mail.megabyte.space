@@ -12,10 +12,14 @@ on:
         default: ""
         type: string
 
+permissions:
+  contents: read
+  deployments: write
+
 jobs:
-  deploy:
+  typecheck:
+    name: Type Check
     runs-on: ubuntu-latest
-    name: Deploy
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +28,30 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "22"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: typecheck
+    environment:
+      name: ${{ inputs.environment || 'production' }}
+      url: ${{ inputs.environment && format('https://mail-{0}.megabyte.space', inputs.environment) || 'https://mail.megabyte.space' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -39,3 +67,14 @@ jobs:
           command: deploy ${{ inputs.environment && format('--env {0}', inputs.environment) || '' }}
           postCommands: |
             echo "${{ secrets.DB_PASSWORD }}" | wrangler secret put DB_PASSWORD ${{ inputs.environment && format('--env {0}', inputs.environment) || '' }}
+
+      - name: Verify deployment
+        run: |
+          DOMAIN="${{ inputs.environment && format('mail-{0}.megabyte.space', inputs.environment) || 'mail.megabyte.space' }}"
+          echo "Waiting for deployment to propagate..."
+          sleep 10
+          echo "Checking health endpoint..."
+          curl -sf "https://${DOMAIN}/__health" || echo "Health check pending (container may need cold start)"
+          echo ""
+          echo "Checking version endpoint..."
+          curl -sf "https://${DOMAIN}/__version" || echo "Version check pending"

@@ -1,10 +1,48 @@
 {
   "name": "listmonk-mail",
-  "version": "1.0.0",
+  "version": "2.0.0",
+  "description": "Listmonk newsletter manager deployed on Cloudflare Containers with Supabase PostgreSQL",
   "private": true,
+  "license": "MIT",
+  "author": {
+    "name": "Megabyte Labs",
+    "email": "blzalewski@gmail.com",
+    "url": "https://megabyte.space"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/HeyMegabyte/mail.megabyte.space"
+  },
+  "homepage": "https://mail.megabyte.space",
+  "bugs": {
+    "url": "https://github.com/HeyMegabyte/mail.megabyte.space/issues"
+  },
+  "keywords": [
+    "listmonk",
+    "cloudflare",
+    "cloudflare-containers",
+    "supabase",
+    "postgresql",
+    "newsletter",
+    "email",
+    "mailing-list",
+    "durable-objects",
+    "workers"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
+    "dev": "wrangler dev",
     "deploy": "wrangler deploy",
-    "dev": "wrangler dev"
+    "deploy:staging": "wrangler deploy --env staging",
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit && echo 'Type check passed'",
+    "logs": "wrangler tail",
+    "logs:staging": "wrangler tail --env staging",
+    "secret:db-password": "echo 'Enter DB password:' && wrangler secret put DB_PASSWORD",
+    "health": "curl -s https://mail.megabyte.space/__health | jq .",
+    "version": "curl -s https://mail.megabyte.space/__version | jq ."
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
