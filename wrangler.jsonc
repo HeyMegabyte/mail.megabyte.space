@@ -28,7 +28,7 @@
   ],
   "vars": {
     "APP_DOMAIN": "mail.megabyte.space",
-    "DB_HOST": "db.lwrwigxubhlbhzolnodb.supabase.co",
+    "DB_HOST": "db.dmlijlffyhibwmmepxhv.supabase.co",
     "DB_PORT": "5432",
     "DB_USER": "postgres",
     "DB_NAME": "postgres",

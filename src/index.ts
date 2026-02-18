@@ -38,7 +38,7 @@ import { env } from "cloudflare:workers";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 /** Current deployment version — bump on each release. */
-const VERSION = "2.0.0";
+const VERSION = "2.1.0";
 
 /** Stable Durable Object name for singleton routing. */
 const DURABLE_OBJECT_NAME = "listmonk-v11";

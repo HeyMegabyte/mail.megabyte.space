@@ -208,7 +208,7 @@ All error responses are structured JSON:
   "code": "MACHINE_READABLE_CODE",
   "request_id": "a1b2c3d4e5f6",
   "timestamp": "2026-02-18T10:30:00.000Z",
-  "version": "2.0.0"
+  "version": "2.1.0"
 }
 ```
 

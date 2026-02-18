@@ -1,6 +1,6 @@
 {
   "name": "listmonk-mail",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Listmonk newsletter manager deployed on Cloudflare Containers with Supabase PostgreSQL",
   "private": true,
   "license": "MIT",

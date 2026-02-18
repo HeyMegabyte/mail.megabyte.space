@@ -219,7 +219,7 @@ Errors return structured JSON with machine-readable codes:
   "code": "CONTAINER_TIMEOUT",
   "request_id": "a1b2c3d4e5f6",
   "timestamp": "2026-02-18T10:30:00.000Z",
-  "version": "2.0.0"
+  "version": "2.1.0"
 }
 ```
 

@@ -145,7 +145,7 @@ Expected response:
 ```json
 {
   "status": "healthy",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "container": "listmonk",
   "database": "supabase-postgresql",
   "domain": "mail.yourdomain.com",
@@ -343,7 +343,7 @@ This runs after every deployment to ensure secrets are always in sync.
 | Check | Command | Expected |
 |---|---|---|
 | Worker health | `curl /__health` | `{"status": "healthy"}` |
-| Worker version | `curl /__version` | `{"version": "2.0.0"}` |
+| Worker version | `curl /__version` | `{"version": "2.1.0"}` |
 | Admin panel | Browser → `/admin` | Login page |
 | Live logs | `npm run logs` | Log stream |
 | Supabase DB | Supabase Dashboard | Tables present |

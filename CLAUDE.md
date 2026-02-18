@@ -97,7 +97,7 @@ npm run secret:db-password
 | Variable         | Description                      | Default               |
 | ---------------- | -------------------------------- | --------------------- |
 | `APP_DOMAIN`     | Public domain name               | `mail.megabyte.space` |
-| `DB_HOST`        | Supabase PostgreSQL host         | (project-specific)    |
+| `DB_HOST`        | Supabase PostgreSQL host         | `db.dmlijlffyhibwmmepxhv.supabase.co` |
 | `DB_PORT`        | Database port                    | `5432`                |
 | `DB_USER`        | Database username                | `postgres`            |
 | `DB_NAME`        | Database name                    | `postgres`            |
