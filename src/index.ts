@@ -3,6 +3,7 @@ import { env } from "cloudflare:workers";
 
 interface Env {
   LISTMONK: DurableObjectNamespace;
+  APP_DOMAIN: string;
   DB_HOST: string;
   DB_PORT: string;
   DB_USER: string;
@@ -19,7 +20,7 @@ export class ListmonkContainer extends Container<Env> {
   enableInternet = true;
   envVars = {
     LISTMONK_app__address: "0.0.0.0:9000",
-    LISTMONK_app__root_url: "https://mail.megabyte.space",
+    LISTMONK_app__root_url: `https://${(env as unknown as Env).APP_DOMAIN}`,
     LISTMONK_db__host: (env as unknown as Env).DB_HOST,
     LISTMONK_db__port: (env as unknown as Env).DB_PORT,
     LISTMONK_db__user: (env as unknown as Env).DB_USER,

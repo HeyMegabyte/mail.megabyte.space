@@ -5,6 +5,12 @@ on:
     branches:
       - main
   workflow_dispatch:
+    inputs:
+      environment:
+        description: "Wrangler environment to deploy (leave empty for production)"
+        required: false
+        default: ""
+        type: string
 
 jobs:
   deploy:
@@ -30,6 +36,6 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy ${{ inputs.environment && format('--env {0}', inputs.environment) || '' }}
           postCommands: |
-            echo "${{ secrets.DB_PASSWORD }}" | wrangler secret put DB_PASSWORD
+            echo "${{ secrets.DB_PASSWORD }}" | wrangler secret put DB_PASSWORD ${{ inputs.environment && format('--env {0}', inputs.environment) || '' }}
