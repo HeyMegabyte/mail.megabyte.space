@@ -24,12 +24,12 @@ export default defineConfig({
   timeout: 120_000,
   retries: 2,
   use: {
-    baseURL: "https://mail.megabyte.space",
-    ignoreHTTPSErrors: true,
+    baseURL:
+      process.env.PLAYWRIGHT_BASE_URL || "https://mail.megabyte.space",
+    ignoreHTTPSErrors: !!process.env.PLAYWRIGHT_IGNORE_HTTPS_ERRORS,
     proxy: proxy ?? undefined,
     launchOptions: {
-      executablePath:
-        "/root/.cache/ms-playwright/chromium-1194/chrome-linux/chrome",
+      executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
     },
   },
   projects: [

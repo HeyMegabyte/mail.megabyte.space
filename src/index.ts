@@ -54,10 +54,11 @@ const HTTP = {
 /** Maximum time (ms) to wait for a container response before timing out. */
 const CONTAINER_TIMEOUT_MS = 30_000;
 
-/** Headers added to every response for observability. */
+/** Headers added to every response for observability and security. */
 const STANDARD_HEADERS = {
   "X-Powered-By": "Cloudflare Containers",
   "X-App-Version": VERSION,
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
 } as const;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -274,7 +275,7 @@ export class ListmonkContainer extends Container<Env> {
     LISTMONK_db__host: (env as unknown as Env).DB_HOST,
     LISTMONK_db__port: (env as unknown as Env).DB_PORT,
     LISTMONK_db__user: (env as unknown as Env).DB_USER,
-    LISTMONK_db__password: (env as unknown as Env).DB_PASSWORD || "",
+    LISTMONK_db__password: (env as unknown as Env).DB_PASSWORD,
     LISTMONK_db__database: (env as unknown as Env).DB_NAME,
     LISTMONK_db__ssl_mode: (env as unknown as Env).DB_SSL_MODE,
 
@@ -284,8 +285,8 @@ export class ListmonkContainer extends Container<Env> {
     LISTMONK_db__max_lifetime: "300s",
 
     // ── Admin ──
-    LISTMONK_ADMIN_USER: (env as unknown as Env).ADMIN_USER || "admin",
-    LISTMONK_ADMIN_PASSWORD: (env as unknown as Env).ADMIN_PASSWORD || "admin",
+    LISTMONK_ADMIN_USER: (env as unknown as Env).ADMIN_USER,
+    LISTMONK_ADMIN_PASSWORD: (env as unknown as Env).ADMIN_PASSWORD,
     LISTMONK_ADMIN_API_USER: "api_admin",
   };
 
@@ -384,7 +385,7 @@ export class ListmonkContainer extends Container<Env> {
       );
 
       return buildErrorResponse(
-        `Container error: ${message}`,
+        "Container is temporarily unavailable",
         "CONTAINER_FETCH_ERROR",
         HTTP.BAD_GATEWAY,
         requestId,
@@ -507,7 +508,7 @@ export default {
       );
 
       return buildErrorResponse(
-        `Service temporarily unavailable: ${message}`,
+        "Service temporarily unavailable",
         "DURABLE_OBJECT_ERROR",
         HTTP.SERVICE_UNAVAILABLE,
         requestId,

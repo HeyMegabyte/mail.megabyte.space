@@ -44,13 +44,10 @@
 │  │                                                             │  │
 │  │  Base Image: listmonk/listmonk:latest (Alpine)              │  │
 │  │  Port: 9000                                                 │  │
-│  │  Added: postgresql16-client (for DB init)                   │  │
 │  │                                                             │  │
 │  │  Boot sequence:                                             │  │
-│  │  1. apk add postgresql16-client                             │  │
-│  │  2. ./listmonk --install --yes (idempotent migration)       │  │
-│  │  3. psql: UPDATE root_url to match APP_DOMAIN               │  │
-│  │  4. exec ./listmonk --config ''                             │  │
+│  │  1. ./listmonk --install --yes (idempotent migration)       │  │
+│  │  2. exec ./listmonk --config ''                             │  │
 │  │                                                             │  │
 │  └──────────────────────────────────────────────┬──────────────┘  │
 │                                                  │                 │
@@ -130,22 +127,16 @@ This ID appears in:
 **File:** `Dockerfile`
 
 The container is based on the official `listmonk/listmonk:latest` Alpine image
-with two additions:
-
-1. **PostgreSQL 16 client** (`apk add postgresql16-client`) — needed to run
-   the `root_url` patch via `psql`
-2. **Boot script** — runs migration, patches settings, starts Listmonk
+with a custom boot script that runs migration and starts Listmonk.
 
 #### Boot Sequence Timing
 
 | Step | Duration | Notes |
 |---|---|---|
 | Container start | ~2s | Cloudflare provisions the instance |
-| `apk add postgresql16-client` | ~3-5s | Downloads and installs package |
 | `listmonk --install --yes` | ~2-3s | Idempotent — skips if tables exist |
-| `psql` root_url patch | ~1s | Single UPDATE query |
 | Listmonk startup | ~1-2s | Go binary, fast startup |
-| **Total cold start** | **~10-15s** | Subsequent requests: <100ms |
+| **Total cold start** | **~5-7s** | Subsequent requests: <100ms |
 
 ### 4. Database (Neon PostgreSQL)
 
@@ -153,25 +144,26 @@ Neon provides a managed serverless PostgreSQL instance with:
 
 | Feature | Value |
 |---|---|
-| Connection pooling | PgBouncer via pooler endpoint |
+| Connection mode | Direct endpoint (prepared statements) |
 | SSL/TLS | Required (`DB_SSL_MODE=require`) |
 | Backups | Point-in-time restore with branching |
 | Dashboard | SQL editor, tables, query insights |
-| Pooler endpoint | `ep-xxx-pooler.region.aws.neon.tech:5432` |
+| Direct endpoint | `ep-xxx.region.aws.neon.tech:5432` |
 
 #### Connection Pool Settings
 
 The Worker configures Listmonk with:
 
 ```
-max_open:     25  connections
-max_idle:     25  connections
+max_open:     5   connections
+max_idle:     5   connections
 max_lifetime: 300s (5 minutes)
 ```
 
-These values are tuned for Neon's connection pooler limits. Neon's pooler
-endpoint supports high connection counts. With `max_open=25`, Listmonk stays
-well within the available pool.
+These values are tuned for Neon's serverless direct endpoint. The direct
+endpoint (not the pooler) is used because Listmonk's Go driver (`lib/pq`)
+requires prepared statements, which are incompatible with PgBouncer's
+transaction mode used by the pooler endpoint.
 
 ## Error Handling Architecture
 
@@ -239,5 +231,5 @@ All error responses are structured JSON:
 | 30-min sleep | Cost savings | Cold start latency |
 | ArrayBuffer buffering | Prevents DO runtime crashes | Memory usage for large uploads |
 | `latest` Docker tag | Always up-to-date | Non-reproducible builds |
-| psql in container | Dynamic root_url patching | Larger image, slower boot |
+| Direct DB endpoint | Prepared statement support | Lower connection limits than pooler |
 | Neon (external DB) | Managed backups, serverless scaling | Network latency, vendor dependency |

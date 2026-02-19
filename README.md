@@ -145,8 +145,8 @@ Your Listmonk instance will be live at `https://your-domain.com` within minutes.
 | Max Instances | `1` | Single container (Durable Object) |
 | Instance Type | `standard-1` | Cloudflare container tier |
 | Internet Access | `true` | Required for SMTP + database |
-| DB Pool (open) | `25` | Max open PostgreSQL connections |
-| DB Pool (idle) | `25` | Max idle PostgreSQL connections |
+| DB Pool (open) | `5` | Max open PostgreSQL connections |
+| DB Pool (idle) | `5` | Max idle PostgreSQL connections |
 | DB Pool (lifetime) | `300s` | Max connection lifetime |
 
 ### API Endpoints
@@ -292,7 +292,7 @@ npm run version
 ```
 .
 ├── src/
-│   └── index.ts            # 310 lines — Worker + Durable Object + Container
+│   └── index.ts            # Worker + Durable Object + Container
 ├── docs/
 │   ├── ARCHITECTURE.md     # Deep dive into system design
 │   ├── DEPLOYMENT.md       # Step-by-step deployment runbook
@@ -300,8 +300,11 @@ npm run version
 ├── .github/
 │   └── workflows/
 │       └── deploy.yml      # CI/CD pipeline
-├── Dockerfile              # Listmonk container with PostgreSQL client
+├── Dockerfile              # Listmonk container image
 ├── wrangler.jsonc          # Cloudflare Workers configuration
+├── playwright.config.ts    # Playwright test configuration
+├── tests/
+│   └── login.spec.ts       # Smoke tests (container, health, version)
 ├── package.json            # Project metadata and scripts
 ├── tsconfig.json           # TypeScript strict configuration
 ├── CLAUDE.md               # AI development context
@@ -316,10 +319,8 @@ npm run version
 
 Cold starts take 10-15 seconds because the container must:
 1. Boot the Alpine Linux image
-2. Install `postgresql16-client` via apk
-3. Run `listmonk --install --yes` (idempotent migration)
-4. Patch the `root_url` setting in the database
-5. Start the Listmonk Go binary
+2. Run `listmonk --install --yes` (idempotent migration)
+3. Start the Listmonk Go binary
 
 The container stays warm for 30 minutes after the last request.
 </details>
@@ -346,10 +347,9 @@ This usually means the container failed to start. Check:
 <details>
 <summary><strong>Admin panel shows wrong URL</strong></summary>
 
-The Dockerfile patches `root_url` on every boot. If it's still wrong:
+The `root_url` is set via the `LISTMONK_app__root_url` environment variable. If it's wrong:
 1. Check `APP_DOMAIN` in `wrangler.jsonc`
-2. The SQL patch runs: `UPDATE settings SET value = '"https://APP_DOMAIN"' WHERE key = 'app.root_url'`
-3. Redeploy to trigger the patch again
+2. Redeploy: `npm run deploy`
 </details>
 
 ## License

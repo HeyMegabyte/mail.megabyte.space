@@ -39,6 +39,9 @@ mail.megabyte.space/
 ├── wrangler.jsonc        # Cloudflare Workers configuration
 ├── package.json          # Node.js project metadata
 ├── tsconfig.json         # TypeScript configuration
+├── playwright.config.ts  # Playwright test configuration
+├── tests/
+│   └── login.spec.ts     # Smoke tests (container, health, version)
 ├── CLAUDE.md             # This file — AI context
 ├── LICENSE               # MIT License
 └── README.md             # Project documentation
@@ -59,8 +62,11 @@ mail.megabyte.space/
    format (double underscores = TOML nesting).
 
 4. **Database Initialization on Boot**: The container runs `listmonk --install --yes`
-   on every start (idempotent) and patches `root_url` via `psql` to ensure the
-   domain is always correct.
+   on every start (idempotent) to ensure tables exist.
+
+5. **Direct Neon Endpoint**: Uses Neon's direct endpoint (not the pooler) because
+   Listmonk's Go driver (`lib/pq`) requires prepared statements, which are
+   incompatible with PgBouncer's transaction mode.
 
 5. **30-Minute Sleep**: Containers auto-sleep after 30 minutes of inactivity.
    Cold starts take ~10-15 seconds (container boot + DB migration check).
@@ -97,7 +103,7 @@ npm run secret:db-password
 | Variable         | Description                      | Default               |
 | ---------------- | -------------------------------- | --------------------- |
 | `APP_DOMAIN`     | Public domain name               | `mail.megabyte.space` |
-| `DB_HOST`        | Neon PostgreSQL host             | `ep-round-wildflower-aigybxdk-pooler.c-4.us-east-1.aws.neon.tech` |
+| `DB_HOST`        | Neon PostgreSQL host (direct)    | *(set in wrangler.jsonc)*         |
 | `DB_PORT`        | Database port                    | `5432`                |
 | `DB_USER`        | Database username                | `neondb_owner`        |
 | `DB_NAME`        | Database name                    | `neondb`              |
@@ -145,10 +151,24 @@ The worker returns structured JSON errors. Reference these codes when debugging:
 
 ## Testing
 
-Currently this project does not have automated tests. The primary validation is:
+Smoke tests run via Playwright against the live deployment:
+
+```bash
+# Run all tests (uses HTTPS_PROXY if set)
+npm test
+
+# Override target URL
+PLAYWRIGHT_BASE_URL=https://mail-staging.megabyte.space npm test
+```
+
+Tests validate:
+- Listmonk container is serving pages (confirms Neon DB connectivity)
+- `/__health` returns correct database metadata
+- `/__version` returns correct runtime metadata
+
+Additional validation:
 - `npm run typecheck` — TypeScript type checking
 - `npm run health` — Live health check after deployment
-- Manual verification of the Listmonk admin panel
 
 ## Coding Conventions
 
