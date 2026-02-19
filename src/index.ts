@@ -38,7 +38,7 @@ import { env } from "cloudflare:workers";
 // ─── Constants ───────────────────────────────────────────────────────────────
 
 /** Current deployment version — bump on each release. */
-const VERSION = "2.1.0";
+const VERSION = "2.2.0";
 
 /** Stable Durable Object name for singleton routing. */
 const DURABLE_OBJECT_NAME = "listmonk-v11";
@@ -195,6 +195,68 @@ function buildErrorResponse(
 }
 
 /**
+ * Returns true if the request's Accept header indicates a browser/HTML client.
+ */
+function acceptsHtml(request: Request): boolean {
+  const accept = request.headers.get("Accept") ?? "";
+  return accept.includes("text/html");
+}
+
+/**
+ * Builds an HTML loading page shown during container cold starts.
+ *
+ * @param domain - The public domain name for display.
+ * @param requestId - Request ID for correlation.
+ * @returns A 503 {@link Response} with an auto-refreshing HTML page.
+ */
+function buildLoadingPage(domain: string, requestId: string): Response {
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Starting up – ${domain}</title>
+  <meta http-equiv="refresh" content="5">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      display: flex; justify-content: center; align-items: center;
+      min-height: 100vh; background: #fafafa; color: #1a1a1a;
+    }
+    .wrap { text-align: center; padding: 2rem; max-width: 420px; }
+    .spinner {
+      width: 36px; height: 36px; margin: 0 auto 1.5rem;
+      border: 3px solid #e5e5e5; border-top-color: #111;
+      border-radius: 50%; animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    h1 { font-size: 1.15rem; font-weight: 600; margin-bottom: .5rem; }
+    p  { font-size: .875rem; color: #666; line-height: 1.5; }
+    .id { margin-top: 1.5rem; font-size: .7rem; color: #bbb; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="spinner"></div>
+    <h1>Hold on while we spin up ${domain}\u2026</h1>
+    <p>The application is waking from sleep. This page will refresh automatically.</p>
+    <div class="id">${requestId}</div>
+  </div>
+</body>
+</html>`;
+  return new Response(html, {
+    status: HTTP.SERVICE_UNAVAILABLE,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Retry-After": "5",
+      "X-Request-Id": requestId,
+      ...STANDARD_HEADERS,
+    },
+  });
+}
+
+/**
  * Adds standard headers and security headers to an outgoing response.
  *
  * @param response - The original {@link Response} from the container.
@@ -271,22 +333,25 @@ export class ListmonkContainer extends Container<Env> {
     LISTMONK_app__address: "0.0.0.0:9000",
     LISTMONK_app__root_url: `https://${(env as unknown as Env).APP_DOMAIN}`,
 
-    // ── Database ──
-    LISTMONK_db__host: (env as unknown as Env).DB_HOST,
-    LISTMONK_db__port: (env as unknown as Env).DB_PORT,
-    LISTMONK_db__user: (env as unknown as Env).DB_USER,
-    LISTMONK_db__password: (env as unknown as Env).DB_PASSWORD,
-    LISTMONK_db__database: (env as unknown as Env).DB_NAME,
-    LISTMONK_db__ssl_mode: (env as unknown as Env).DB_SSL_MODE,
+    // ── Database (defaults match wrangler.jsonc) ──
+    LISTMONK_db__host:
+      (env as unknown as Env).DB_HOST ||
+      "ep-round-wildflower-aigybxdk.c-4.us-east-1.aws.neon.tech",
+    LISTMONK_db__port: (env as unknown as Env).DB_PORT || "5432",
+    LISTMONK_db__user: (env as unknown as Env).DB_USER || "neondb_owner",
+    LISTMONK_db__password: (env as unknown as Env).DB_PASSWORD || "",
+    LISTMONK_db__database: (env as unknown as Env).DB_NAME || "neondb",
+    LISTMONK_db__ssl_mode: (env as unknown as Env).DB_SSL_MODE || "require",
 
     // ── Connection Pool (tuned for Neon serverless) ──
     LISTMONK_db__max_open: "5",
     LISTMONK_db__max_idle: "5",
     LISTMONK_db__max_lifetime: "300s",
 
-    // ── Admin ──
-    LISTMONK_ADMIN_USER: (env as unknown as Env).ADMIN_USER,
-    LISTMONK_ADMIN_PASSWORD: (env as unknown as Env).ADMIN_PASSWORD,
+    // ── Admin (defaults match wrangler.jsonc) ──
+    LISTMONK_ADMIN_USER: (env as unknown as Env).ADMIN_USER || "admin",
+    LISTMONK_ADMIN_PASSWORD:
+      (env as unknown as Env).ADMIN_PASSWORD || "ListmonkAdmin2024",
     LISTMONK_ADMIN_API_USER: "api_admin",
   };
 
@@ -365,29 +430,31 @@ export class ListmonkContainer extends Container<Env> {
     } catch (error) {
       const duration = Date.now() - startTime;
 
-      // Distinguish timeout from other errors
-      if (error instanceof DOMException && error.name === "AbortError") {
-        console.error(
-          `[${requestId}] ${method} ${pathname} — TIMEOUT after ${duration}ms`,
-        );
-        return buildErrorResponse(
-          "Container request timed out",
-          "CONTAINER_TIMEOUT",
-          HTTP.GATEWAY_TIMEOUT,
+      const message =
+        error instanceof Error ? error.message : String(error);
+      const isTimeout =
+        error instanceof DOMException && error.name === "AbortError";
+      const code = isTimeout ? "CONTAINER_TIMEOUT" : "CONTAINER_FETCH_ERROR";
+      const status = isTimeout ? HTTP.GATEWAY_TIMEOUT : HTTP.BAD_GATEWAY;
+
+      console.error(
+        `[${requestId}] ${method} ${pathname} — ${isTimeout ? "TIMEOUT" : "ERROR"} after ${duration}ms: ${message}`,
+      );
+
+      // Show a friendly loading page for browser requests during cold starts
+      if (acceptsHtml(request)) {
+        return buildLoadingPage(
+          (env as unknown as Env).APP_DOMAIN,
           requestId,
         );
       }
 
-      const message =
-        error instanceof Error ? error.message : String(error);
-      console.error(
-        `[${requestId}] ${method} ${pathname} — ERROR after ${duration}ms: ${message}`,
-      );
-
       return buildErrorResponse(
-        "Container is temporarily unavailable",
-        "CONTAINER_FETCH_ERROR",
-        HTTP.BAD_GATEWAY,
+        isTimeout
+          ? "Container request timed out"
+          : "Container is temporarily unavailable",
+        code,
+        status,
         requestId,
       );
     }
@@ -506,6 +573,11 @@ export default {
       console.error(
         `[${requestId}] Worker error routing to Durable Object: ${message}`,
       );
+
+      // Show loading page for browser requests when the service isn't ready
+      if (acceptsHtml(request)) {
+        return buildLoadingPage(workerEnv.APP_DOMAIN, requestId);
+      }
 
       return buildErrorResponse(
         "Service temporarily unavailable",
