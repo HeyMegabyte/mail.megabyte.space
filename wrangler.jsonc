@@ -28,7 +28,7 @@
   ],
   "vars": {
     "APP_DOMAIN": "mail.megabyte.space",
-    "DB_HOST": "ep-round-wildflower-aigybxdk-pooler.c-4.us-east-1.aws.neon.tech",
+    "DB_HOST": "ep-round-wildflower-aigybxdk.c-4.us-east-1.aws.neon.tech",
     "DB_PORT": "5432",
     "DB_USER": "neondb_owner",
     "DB_NAME": "neondb",

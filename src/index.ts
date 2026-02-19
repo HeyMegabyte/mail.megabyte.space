@@ -237,7 +237,7 @@ function augmentResponse(response: Response, requestId: string): Response {
  * | Port               | `9000`                         | Listmonk default HTTP port         |
  * | Sleep After        | `30m`                          | Container sleeps after 30m idle    |
  * | Internet Access    | `true`                         | Required for SMTP and webhooks     |
- * | Max DB Connections | `25` open / `25` idle          | Tuned for Neon connection pool     |
+ * | Max DB Connections | `5` open / `5` idle             | Tuned for Neon serverless          |
  * | Connection Lifetime| `300s`                         | 5-minute max lifetime per conn     |
  *
  * @extends Container<Env>
@@ -274,13 +274,13 @@ export class ListmonkContainer extends Container<Env> {
     LISTMONK_db__host: (env as unknown as Env).DB_HOST,
     LISTMONK_db__port: (env as unknown as Env).DB_PORT,
     LISTMONK_db__user: (env as unknown as Env).DB_USER,
-    LISTMONK_db__password: (env as unknown as Env).DB_PASSWORD,
+    LISTMONK_db__password: (env as unknown as Env).DB_PASSWORD || "",
     LISTMONK_db__database: (env as unknown as Env).DB_NAME,
     LISTMONK_db__ssl_mode: (env as unknown as Env).DB_SSL_MODE,
 
-    // ── Connection Pool ──
-    LISTMONK_db__max_open: "25",
-    LISTMONK_db__max_idle: "25",
+    // ── Connection Pool (tuned for Neon serverless) ──
+    LISTMONK_db__max_open: "5",
+    LISTMONK_db__max_idle: "5",
     LISTMONK_db__max_lifetime: "300s",
 
     // ── Admin ──

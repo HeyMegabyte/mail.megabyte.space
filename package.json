@@ -42,10 +42,13 @@
     "logs:staging": "wrangler tail --env staging",
     "secret:db-password": "echo 'Enter DB password:' && wrangler secret put DB_PASSWORD",
     "health": "curl -s https://mail.megabyte.space/__health | jq .",
-    "version": "curl -s https://mail.megabyte.space/__version | jq ."
+    "version": "curl -s https://mail.megabyte.space/__version | jq .",
+    "test": "playwright test",
+    "test:headed": "playwright test --headed"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250214.0",
+    "@playwright/test": "^1.58.2",
     "typescript": "^5.7.0",
     "wrangler": "^4.0.0"
   },
