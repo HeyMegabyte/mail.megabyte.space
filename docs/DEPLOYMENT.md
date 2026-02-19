@@ -1,7 +1,7 @@
 # Deployment Guide
 
 > Step-by-step instructions for deploying Listmonk on Cloudflare Containers
-> with Supabase PostgreSQL.
+> with Neon PostgreSQL.
 
 ## Table of Contents
 
@@ -22,7 +22,7 @@
 | Service | Tier | What you need |
 |---|---|---|
 | [Cloudflare](https://cloudflare.com/) | Free or Pro | Account ID, API token, domain added |
-| [Supabase](https://supabase.com/) | Free or Pro | Project with PostgreSQL database |
+| [Neon](https://neon.tech/) | Free or Pro | Project with PostgreSQL database |
 | [GitHub](https://github.com/) | Free | Repository access (for CI/CD) |
 
 ### Local Tools
@@ -48,13 +48,13 @@ Create a Custom Token at [dash.cloudflare.com/profile/api-tokens](https://dash.c
 
 ## Initial Setup
 
-### 1. Create Supabase Project
+### 1. Create Neon Project
 
-1. Go to [app.supabase.com](https://app.supabase.com/)
+1. Go to [console.neon.tech](https://console.neon.tech/)
 2. Click **New Project**
 3. Note down:
-   - **Project URL:** `https://xxxxx.supabase.co`
-   - **Database Host:** `db.xxxxx.supabase.co`
+   - **Connection string:** `postgresql://user:password@ep-xxx-pooler.region.aws.neon.tech/neondb?sslmode=require`
+   - **Database Host:** The pooler endpoint hostname
    - **Database Password:** (save securely)
 
 ### 2. Add Domain to Cloudflare
@@ -80,10 +80,10 @@ Edit `wrangler.jsonc`:
   "account_id": "YOUR_ACCOUNT_ID",
   "vars": {
     "APP_DOMAIN": "mail.yourdomain.com",
-    "DB_HOST": "db.YOUR_PROJECT_REF.supabase.co",
+    "DB_HOST": "ep-YOUR_PROJECT-pooler.region.aws.neon.tech",
     "DB_PORT": "5432",
-    "DB_USER": "postgres",
-    "DB_NAME": "postgres",
+    "DB_USER": "neondb_owner",
+    "DB_NAME": "neondb",
     "DB_SSL_MODE": "require",
     "ADMIN_USER": "admin",
     "ADMIN_PASSWORD": "your-admin-password"
@@ -105,7 +105,7 @@ npx wrangler login
 
 # Set database password
 npx wrangler secret put DB_PASSWORD
-# → Paste your Supabase database password when prompted
+# → Paste your Neon database password when prompted
 ```
 
 ## First Deployment
@@ -147,7 +147,7 @@ Expected response:
   "status": "healthy",
   "version": "2.1.0",
   "container": "listmonk",
-  "database": "supabase-postgresql",
+  "database": "neon-postgresql",
   "domain": "mail.yourdomain.com",
   "uptime": "running",
   "timestamp": "2026-02-18T..."
@@ -219,10 +219,10 @@ npm run deploy
       "name": "listmonk-acme",
       "vars": {
         "APP_DOMAIN": "mail.acme.com",
-        "DB_HOST": "db.ACME_PROJECT.supabase.co",
+        "DB_HOST": "ep-ACME_PROJECT-pooler.region.aws.neon.tech",
         "DB_PORT": "5432",
-        "DB_USER": "postgres",
-        "DB_NAME": "postgres",
+        "DB_USER": "neondb_owner",
+        "DB_NAME": "neondb",
         "DB_SSL_MODE": "require",
         "ADMIN_USER": "admin",
         "ADMIN_PASSWORD": "AcmePassword123"
@@ -264,7 +264,7 @@ Each environment gets its own:
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Your Cloudflare API token |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
-| `DB_PASSWORD` | Supabase database password |
+| `DB_PASSWORD` | Neon database password |
 
 3. Push to `main` to trigger automatic deployment.
 
@@ -346,5 +346,5 @@ This runs after every deployment to ensure secrets are always in sync.
 | Worker version | `curl /__version` | `{"version": "2.1.0"}` |
 | Admin panel | Browser → `/admin` | Login page |
 | Live logs | `npm run logs` | Log stream |
-| Supabase DB | Supabase Dashboard | Tables present |
+| Neon DB | Neon Console | Tables present |
 | DNS | `dig mail.yourdomain.com` | Points to Cloudflare |

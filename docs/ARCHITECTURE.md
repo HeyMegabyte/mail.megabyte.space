@@ -1,7 +1,7 @@
 # Architecture
 
 > Deep dive into the system design of mail.megabyte.space — Listmonk on
-> Cloudflare Containers with Supabase PostgreSQL.
+> Cloudflare Containers with Neon PostgreSQL.
 
 ## System Overview
 
@@ -57,8 +57,8 @@
 └──────────────────────────────────────────────────┼─────────────────┘
                                                    │ TLS (port 5432)
                                           ┌────────▼────────┐
-                                          │    Supabase      │
-                                          │  PostgreSQL 15   │
+                                          │      Neon        │
+                                          │  PostgreSQL      │
                                           │                  │
                                           │  Tables:         │
                                           │  • subscribers   │
@@ -147,17 +147,17 @@ with two additions:
 | Listmonk startup | ~1-2s | Go binary, fast startup |
 | **Total cold start** | **~10-15s** | Subsequent requests: <100ms |
 
-### 4. Database (Supabase PostgreSQL)
+### 4. Database (Neon PostgreSQL)
 
-Supabase provides a managed PostgreSQL 15 instance with:
+Neon provides a managed serverless PostgreSQL instance with:
 
 | Feature | Value |
 |---|---|
-| Connection pooling | PgBouncer (transaction mode) |
+| Connection pooling | PgBouncer via pooler endpoint |
 | SSL/TLS | Required (`DB_SSL_MODE=require`) |
-| Backups | Automatic daily (7-day retention on free tier) |
-| Dashboard | SQL editor, table viewer, logs |
-| Direct connection | `db.PROJECT_REF.supabase.co:5432` |
+| Backups | Point-in-time restore with branching |
+| Dashboard | SQL editor, tables, query insights |
+| Pooler endpoint | `ep-xxx-pooler.region.aws.neon.tech:5432` |
 
 #### Connection Pool Settings
 
@@ -169,9 +169,9 @@ max_idle:     25  connections
 max_lifetime: 300s (5 minutes)
 ```
 
-These values are tuned for Supabase's default connection limits. Supabase free
-tier allows 60 direct connections. With `max_open=25`, Listmonk uses at most
-~42% of the available pool.
+These values are tuned for Neon's connection pooler limits. Neon's pooler
+endpoint supports high connection counts. With `max_open=25`, Listmonk stays
+well within the available pool.
 
 ## Error Handling Architecture
 
@@ -220,7 +220,7 @@ All error responses are structured JSON:
 | Security headers | `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` |
 | Admin auth | Listmonk's built-in Basic Auth for `/admin` |
 | DB credentials | `DB_PASSWORD` stored as Wrangler secret (encrypted at rest) |
-| No direct DB access | Container connects via Supabase's TLS endpoint |
+| No direct DB access | Container connects via Neon's TLS endpoint |
 
 ## Cost Model
 
@@ -228,7 +228,7 @@ All error responses are structured JSON:
 |---|---|---|
 | Cloudflare Workers | 100K requests/day | $5/mo (10M requests) |
 | Cloudflare Containers | Beta (currently free) | TBD (billing by uptime) |
-| Supabase PostgreSQL | 500MB storage, 2 GB transfer | $25/mo (8GB, 50GB transfer) |
+| Neon PostgreSQL | 0.5 GiB storage (free) | Usage-based (compute + storage) |
 | **Total** | **$0/mo** (within limits) | **~$30/mo** |
 
 ## Design Tradeoffs
@@ -240,4 +240,4 @@ All error responses are structured JSON:
 | ArrayBuffer buffering | Prevents DO runtime crashes | Memory usage for large uploads |
 | `latest` Docker tag | Always up-to-date | Non-reproducible builds |
 | psql in container | Dynamic root_url patching | Larger image, slower boot |
-| Supabase (external DB) | Managed backups, dashboard | Network latency, vendor dependency |
+| Neon (external DB) | Managed backups, serverless scaling | Network latency, vendor dependency |

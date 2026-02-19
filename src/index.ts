@@ -3,20 +3,20 @@
  *
  * Deploys [Listmonk](https://listmonk.app/) — a high-performance, self-hosted
  * newsletter and mailing list manager — on Cloudflare Containers backed by
- * Supabase PostgreSQL.
+ * Neon PostgreSQL.
  *
  * ## Architecture
  *
  * ```
  * Internet ──► Cloudflare Worker (Edge) ──► Durable Object ──► Listmonk Container
  *                                                                    │
- *                                                              Supabase PostgreSQL
+ *                                                              Neon PostgreSQL
  * ```
  *
  * The Worker acts as an intelligent reverse proxy that:
  * 1. Routes all inbound requests to a single Durable Object instance
  * 2. The Durable Object manages a persistent Listmonk Docker container
- * 3. The container connects to Supabase PostgreSQL over TLS
+ * 3. The container connects to Neon PostgreSQL over TLS
  * 4. The container auto-sleeps after 30 minutes of inactivity
  *
  * ## Error Handling Strategy
@@ -71,7 +71,7 @@ const STANDARD_HEADERS = {
  * | ---------------- | ----------------- | ----------------------------------------- |
  * | `LISTMONK`       | Durable Object    | Namespace binding for the container DO     |
  * | `APP_DOMAIN`     | `vars`            | Public domain (e.g. `mail.megabyte.space`) |
- * | `DB_HOST`        | `vars`            | Supabase PostgreSQL host                   |
+ * | `DB_HOST`        | `vars`            | Neon PostgreSQL host                   |
  * | `DB_PORT`        | `vars`            | Database port (default: `5432`)            |
  * | `DB_USER`        | `vars`            | Database user (default: `postgres`)        |
  * | `DB_PASSWORD`    | `secrets`         | Database password (set via wrangler CLI)   |
@@ -85,7 +85,7 @@ export interface Env {
   readonly LISTMONK: DurableObjectNamespace;
   /** Public-facing domain name for the application. */
   readonly APP_DOMAIN: string;
-  /** Supabase PostgreSQL hostname. */
+  /** Neon PostgreSQL hostname. */
   readonly DB_HOST: string;
   /** Database port number. */
   readonly DB_PORT: string;
@@ -134,7 +134,7 @@ interface ErrorResponse {
  *   "status": "healthy",
  *   "version": "2.0.0",
  *   "container": "listmonk",
- *   "database": "supabase-postgresql",
+ *   "database": "neon-postgresql",
  *   "uptime": "running",
  *   "timestamp": "2026-01-15T10:30:00.000Z"
  * }
@@ -237,7 +237,7 @@ function augmentResponse(response: Response, requestId: string): Response {
  * | Port               | `9000`                         | Listmonk default HTTP port         |
  * | Sleep After        | `30m`                          | Container sleeps after 30m idle    |
  * | Internet Access    | `true`                         | Required for SMTP and webhooks     |
- * | Max DB Connections | `25` open / `25` idle          | Tuned for Supabase connection pool |
+ * | Max DB Connections | `25` open / `25` idle          | Tuned for Neon connection pool     |
  * | Connection Lifetime| `300s`                         | 5-minute max lifetime per conn     |
  *
  * @extends Container<Env>
@@ -454,7 +454,7 @@ export default {
         status: "healthy",
         version: VERSION,
         container: "listmonk",
-        database: "supabase-postgresql",
+        database: "neon-postgresql",
         domain: workerEnv.APP_DOMAIN,
         uptime: "running",
         timestamp: new Date().toISOString(),
@@ -478,7 +478,7 @@ export default {
             version: VERSION,
             container: "listmonk/listmonk:latest",
             runtime: "cloudflare-containers",
-            database: "supabase-postgresql",
+            database: "neon-postgresql",
           },
           null,
           2,

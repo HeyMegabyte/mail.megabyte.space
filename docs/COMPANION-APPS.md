@@ -1,18 +1,18 @@
 # Companion Apps Guide
 
 > Open-source web applications that can be deployed alongside Listmonk using
-> the same **Cloudflare Containers + Supabase PostgreSQL** pattern.
+> the same **Cloudflare Containers + Neon PostgreSQL** pattern.
 
 ## Overview
 
 The architecture used for Listmonk — a Cloudflare Worker proxying to a Docker
-container backed by Supabase PostgreSQL — is a repeatable pattern. Any
+container backed by Neon PostgreSQL — is a repeatable pattern. Any
 application that meets these criteria can be deployed the same way:
 
 | Requirement | Why |
 |---|---|
 | Has a Docker image | Cloudflare Containers run Docker images |
-| Supports PostgreSQL | Supabase provides managed PostgreSQL |
+| Supports PostgreSQL | Neon provides managed PostgreSQL |
 | Single-process friendly | Cloudflare Containers run one container per Durable Object |
 | Reasonable resource usage | `standard-1` instance has limited CPU/RAM |
 | Configurable via environment | Container env vars are injected by the Worker |
@@ -38,7 +38,7 @@ These apps are lightweight, PostgreSQL-native, and deploy identically to Listmon
 
 **Environment variables:**
 ```
-DATABASE_URL=postgresql://postgres:PASSWORD@db.xxx.supabase.co:5432/postgres?sslmode=require
+DATABASE_URL=postgresql://neondb_owner:PASSWORD@ep-xxx-pooler.region.aws.neon.tech:5432/neondb?sslmode=require
 ```
 
 **Synergy with Listmonk:** Add Umami tracking script to your newsletter templates
@@ -66,7 +66,7 @@ to measure open rates and click-through without relying on third-party analytics
 DEFAULT_DOMAIN=s.megabyte.space
 IS_HTTPS_ENABLED=true
 DB_DRIVER=postgres
-DB_HOST=db.xxx.supabase.co
+DB_HOST=ep-xxx-pooler.region.aws.neon.tech
 DB_PORT=5432
 DB_NAME=postgres
 DB_USER=postgres
@@ -96,7 +96,7 @@ DB_PASSWORD=xxx
 **Environment variables:**
 ```
 BASE_URL=https://board.megabyte.space
-DATABASE_URL=postgresql://postgres:PASSWORD@db.xxx.supabase.co:5432/postgres?sslmode=require
+DATABASE_URL=postgresql://neondb_owner:PASSWORD@ep-xxx-pooler.region.aws.neon.tech:5432/neondb?sslmode=require
 SECRET_KEY=your-secret-key
 DEFAULT_ADMIN_EMAIL=admin@megabyte.space
 DEFAULT_ADMIN_PASSWORD=xxx
@@ -128,7 +128,7 @@ These apps work well but may use more resources or have additional requirements.
 **Environment variables:**
 ```
 DB_TYPE=postgresdb
-DB_POSTGRESDB_HOST=db.xxx.supabase.co
+DB_POSTGRESDB_HOST=ep-xxx-pooler.region.aws.neon.tech
 DB_POSTGRESDB_PORT=5432
 DB_POSTGRESDB_DATABASE=postgres
 DB_POSTGRESDB_USER=postgres
@@ -164,7 +164,7 @@ adds them to a CRM, or notifies your team.
 **Environment variables:**
 ```
 DB_TYPE=postgres
-DB_HOST=db.xxx.supabase.co
+DB_HOST=ep-xxx-pooler.region.aws.neon.tech
 DB_PORT=5432
 DB_USER=postgres
 DB_PASS=xxx
@@ -212,7 +212,7 @@ Cloudflare R2 (S3-compatible) and either a Redis container or Upstash Redis.
 **Environment variables:**
 ```
 DB_CLIENT=pg
-DB_HOST=db.xxx.supabase.co
+DB_HOST=ep-xxx-pooler.region.aws.neon.tech
 DB_PORT=5432
 DB_DATABASE=postgres
 DB_USER=postgres
@@ -226,7 +226,7 @@ ADMIN_PASSWORD=xxx
 
 ### Hasura — GraphQL Engine
 
-> Instant GraphQL API over your existing Supabase PostgreSQL tables. Zero code.
+> Instant GraphQL API over your existing Neon PostgreSQL tables. Zero code.
 
 | Attribute | Value |
 |---|---|
@@ -240,7 +240,7 @@ ADMIN_PASSWORD=xxx
 
 **Environment variables:**
 ```
-HASURA_GRAPHQL_DATABASE_URL=postgresql://postgres:PASSWORD@db.xxx.supabase.co:5432/postgres?sslmode=require
+HASURA_GRAPHQL_DATABASE_URL=postgresql://neondb_owner:PASSWORD@ep-xxx-pooler.region.aws.neon.tech:5432/neondb?sslmode=require
 HASURA_GRAPHQL_ENABLE_CONSOLE=true
 HASURA_GRAPHQL_ADMIN_SECRET=your-admin-secret
 ```
@@ -393,7 +393,7 @@ CMD ["your-app", "start"]
   "migrations": [{ "new_sqlite_classes": ["MyAppContainer"], "tag": "v1" }],
   "vars": {
     "APP_DOMAIN": "myapp.megabyte.space",
-    "DATABASE_URL": "postgresql://postgres:xxx@db.xxx.supabase.co:5432/postgres?sslmode=require"
+    "DATABASE_URL": "postgresql://neondb_owner:xxx@ep-xxx-pooler.region.aws.neon.tech:5432/neondb?sslmode=require"
   },
   "routes": [{ "pattern": "myapp.megabyte.space", "custom_domain": true }]
 }
@@ -407,7 +407,7 @@ npx wrangler deploy
 
 ## Shared Database Considerations
 
-You can share a single Supabase PostgreSQL instance across multiple apps.
+You can share a single Neon PostgreSQL instance across multiple apps.
 Each app typically creates its own tables with unique prefixes:
 
 | App | Table Prefix | Example Tables |
@@ -418,7 +418,7 @@ Each app typically creates its own tables with unique prefixes:
 | Wiki.js | `wiki_` | `wiki_pages`, `wiki_users` |
 | Hasura | `hdb_` | `hdb_catalog`, `hdb_metadata` |
 
-**Tip:** Use separate Supabase schemas for each app to avoid table name conflicts:
+**Tip:** Use separate Neon schemas for each app to avoid table name conflicts:
 
 ```sql
 CREATE SCHEMA umami;
@@ -426,5 +426,5 @@ CREATE SCHEMA n8n;
 -- Then set PGOPTIONS='-c search_path=umami' in the container env
 ```
 
-Or use separate Supabase projects for complete isolation (recommended for
+Or use separate Neon projects for complete isolation (recommended for
 production).

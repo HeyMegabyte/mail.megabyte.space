@@ -7,7 +7,7 @@
 <h1 align="center">mail.megabyte.space</h1>
 
 <p align="center">
-  <strong>Self-hosted Listmonk newsletter manager running on Cloudflare Containers with Supabase PostgreSQL</strong>
+  <strong>Self-hosted Listmonk newsletter manager running on Cloudflare Containers with Neon PostgreSQL</strong>
 </p>
 
 <p align="center">
@@ -16,14 +16,14 @@
   <a href="https://github.com/HeyMegabyte/mail.megabyte.space/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="License" /></a>
   <a href="https://listmonk.app/"><img src="https://img.shields.io/badge/listmonk-latest-purple?style=flat-square" alt="Listmonk Version" /></a>
   <img src="https://img.shields.io/badge/runtime-Cloudflare_Containers-F38020?style=flat-square&logo=cloudflare" alt="Cloudflare Containers" />
-  <img src="https://img.shields.io/badge/database-Supabase_PostgreSQL-3ECF8E?style=flat-square&logo=supabase" alt="Supabase" />
+  <img src="https://img.shields.io/badge/database-Neon_PostgreSQL-00E699?style=flat-square&logo=postgresql" alt="Neon" />
 </p>
 
 ---
 
 ## Overview
 
-This repository deploys [Listmonk](https://listmonk.app/) — a high-performance, self-hosted newsletter and mailing list manager — on [Cloudflare Containers](https://developers.cloudflare.com/containers/) with [Supabase](https://supabase.com/) PostgreSQL as the backend database.
+This repository deploys [Listmonk](https://listmonk.app/) — a high-performance, self-hosted newsletter and mailing list manager — on [Cloudflare Containers](https://developers.cloudflare.com/containers/) with [Neon](https://neon.tech/) PostgreSQL as the backend database.
 
 **Why this stack?**
 
@@ -32,7 +32,7 @@ This repository deploys [Listmonk](https://listmonk.app/) — a high-performance
 | **Zero server management** | Cloudflare Containers handles provisioning, scaling, and TLS |
 | **Global edge routing** | Requests are routed through Cloudflare's network (300+ cities) |
 | **Auto-sleep** | Container sleeps after 30 minutes of inactivity — pay only for usage |
-| **Managed database** | Supabase PostgreSQL with automatic backups, connection pooling, and dashboards |
+| **Managed database** | Neon PostgreSQL with automatic backups, connection pooling, and branching |
 | **One-command deploy** | `npm run deploy` builds the Docker image and deploys globally |
 
 ## Architecture
@@ -53,7 +53,7 @@ This repository deploys [Listmonk](https://listmonk.app/) — a high-performance
 └──────────────────────────────────────────────────────┼───────────┘
                                                        │ TLS
                                               ┌────────▼────────┐
-                                              │    Supabase      │
+                                              │      Neon        │
                                               │   PostgreSQL     │
                                               │                  │
                                               │  ┌────────────┐  │
@@ -75,7 +75,7 @@ This repository deploys [Listmonk](https://listmonk.app/) — a high-performance
 | [Node.js](https://nodejs.org/) | >= 20.0.0 | Runtime for Wrangler CLI |
 | [Wrangler](https://developers.cloudflare.com/workers/wrangler/) | >= 4.0.0 | Cloudflare deployment tool |
 | [Docker](https://www.docker.com/) | Latest | Container image builds |
-| [Supabase](https://supabase.com/) account | — | Managed PostgreSQL database |
+| [Neon](https://neon.tech/) account | — | Managed PostgreSQL database |
 | [Cloudflare](https://cloudflare.com/) account | — | Workers + Containers runtime |
 
 ### 1. Clone and Install
@@ -94,7 +94,7 @@ Edit `wrangler.jsonc` with your settings:
 {
   "vars": {
     "APP_DOMAIN": "mail.yourdomain.com",      // Your domain
-    "DB_HOST": "db.xxxxx.supabase.co",         // Supabase host
+    "DB_HOST": "ep-xxx.us-east-1.aws.neon.tech", // Neon host
     "DB_PORT": "5432",
     "DB_USER": "postgres",
     "DB_NAME": "postgres",
@@ -108,7 +108,7 @@ Edit `wrangler.jsonc` with your settings:
 ### 3. Set Secrets
 
 ```bash
-# Database password (from Supabase dashboard → Settings → Database)
+# Database password (from Neon dashboard → Connection Details)
 wrangler secret put DB_PASSWORD
 ```
 
@@ -127,7 +127,7 @@ Your Listmonk instance will be live at `https://your-domain.com` within minutes.
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `APP_DOMAIN` | Yes | `mail.megabyte.space` | Public-facing domain name |
-| `DB_HOST` | Yes | — | Supabase PostgreSQL hostname |
+| `DB_HOST` | Yes | — | Neon PostgreSQL hostname |
 | `DB_PORT` | No | `5432` | PostgreSQL port |
 | `DB_USER` | No | `postgres` | Database username |
 | `DB_NAME` | No | `postgres` | Database name |
@@ -170,7 +170,7 @@ Deploy separate instances for different domains or environments:
       "name": "listmonk-mail-staging",
       "vars": {
         "APP_DOMAIN": "mail-staging.megabyte.space",
-        "DB_HOST": "db.YOUR_STAGING_PROJECT.supabase.co"
+        "DB_HOST": "ep-YOUR_STAGING_PROJECT.us-east-1.aws.neon.tech"
         // ... other vars
       },
       "routes": [
@@ -246,7 +246,7 @@ The GitHub Actions workflow (`.github/workflows/deploy.yml`) automatically:
 |---|---|
 | `CLOUDFLARE_API_TOKEN` | Cloudflare API token with Workers + DNS permissions |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
-| `DB_PASSWORD` | Supabase PostgreSQL password |
+| `DB_PASSWORD` | Neon PostgreSQL password |
 
 ### Manual Deployment
 
@@ -255,7 +255,7 @@ environment parameter (e.g., `staging`).
 
 ## Companion Apps
 
-This same Cloudflare Containers + Supabase pattern works for many other
+This same Cloudflare Containers + Neon pattern works for many other
 open-source applications. See [docs/COMPANION-APPS.md](docs/COMPANION-APPS.md)
 for a complete guide.
 
@@ -266,7 +266,7 @@ for a complete guide.
 | [Umami](https://umami.is/) | Analytics | Track newsletter campaign clicks |
 | [n8n](https://n8n.io/) | Automation | Automate subscriber workflows |
 | [Shlink](https://shlink.io/) | URL Shortener | Short links in newsletters with tracking |
-| [Hasura](https://hasura.io/) | GraphQL | API layer over your Supabase data |
+| [Hasura](https://hasura.io/) | GraphQL | API layer over your Neon data |
 
 ## Development
 
@@ -329,7 +329,7 @@ The container stays warm for 30 minutes after the last request.
 
 This usually means the container failed to start. Check:
 1. `npm run logs` for container error messages
-2. Verify your Supabase database is reachable and credentials are correct
+2. Verify your Neon database is reachable and credentials are correct
 3. Ensure `DB_PASSWORD` is set: `wrangler secret list`
 4. Try redeploying: `npm run deploy`
 </details>
@@ -337,10 +337,10 @@ This usually means the container failed to start. Check:
 <details>
 <summary><strong>Database connection refused</strong></summary>
 
-1. Check Supabase dashboard — is the project paused?
-2. Verify `DB_HOST` matches your Supabase project
+1. Check Neon dashboard — is the project suspended?
+2. Verify `DB_HOST` matches your Neon project endpoint
 3. Ensure `DB_SSL_MODE` is set to `require`
-4. Check that Supabase network restrictions allow Cloudflare IPs
+4. Check that Neon IP allow-list permits Cloudflare IPs
 </details>
 
 <details>
@@ -359,6 +359,6 @@ The Dockerfile patches `root_url` on every boot. If it's still wrong:
 ---
 
 <p align="center">
-  <sub>Built with Cloudflare Containers + Supabase PostgreSQL</sub><br/>
+  <sub>Built with Cloudflare Containers + Neon PostgreSQL</sub><br/>
   <sub>Deployed at <a href="https://mail.megabyte.space">mail.megabyte.space</a></sub>
 </p>

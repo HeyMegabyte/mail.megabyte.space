@@ -3,7 +3,7 @@
 # ─────────────────────────────────────────────────────────────────────────────
 #
 # This Dockerfile extends the official Listmonk image for use with
-# Cloudflare Containers + Supabase PostgreSQL.
+# Cloudflare Containers + Neon PostgreSQL.
 #
 # What it does:
 #   1. Installs the PostgreSQL 16 client (psql) for database initialization
@@ -13,7 +13,7 @@
 #
 # Environment variables (injected by the Durable Object):
 #   LISTMONK_app__root_url   - Public URL (e.g. https://mail.megabyte.space)
-#   LISTMONK_db__host        - Supabase PostgreSQL host
+#   LISTMONK_db__host        - Neon PostgreSQL host
 #   LISTMONK_db__port        - Database port (5432)
 #   LISTMONK_db__user        - Database user
 #   LISTMONK_db__password    - Database password

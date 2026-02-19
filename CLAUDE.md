@@ -8,7 +8,7 @@
 
 **mail.megabyte.space** is a production deployment of [Listmonk](https://listmonk.app/)
 — a self-hosted, high-performance newsletter and mailing list manager — running on
-**Cloudflare Containers** with **Supabase PostgreSQL** as the database backend.
+**Cloudflare Containers** with **Neon PostgreSQL** as the database backend.
 
 | Attribute      | Value                                            |
 | -------------- | ------------------------------------------------ |
@@ -16,7 +16,7 @@
 | Health Check   | `https://mail.megabyte.space/__health`           |
 | Version Info   | `https://mail.megabyte.space/__version`          |
 | Runtime        | Cloudflare Workers + Durable Objects + Containers|
-| Database       | Supabase PostgreSQL (TLS required)               |
+| Database       | Neon PostgreSQL (TLS required)                   |
 | Language       | TypeScript (ESNext, strict mode)                 |
 | Package Manager| npm                                              |
 | Node Version   | >= 20.0.0                                        |
@@ -97,10 +97,10 @@ npm run secret:db-password
 | Variable         | Description                      | Default               |
 | ---------------- | -------------------------------- | --------------------- |
 | `APP_DOMAIN`     | Public domain name               | `mail.megabyte.space` |
-| `DB_HOST`        | Supabase PostgreSQL host         | `db.dmlijlffyhibwmmepxhv.supabase.co` |
+| `DB_HOST`        | Neon PostgreSQL host             | `ep-round-wildflower-aigybxdk-pooler.c-4.us-east-1.aws.neon.tech` |
 | `DB_PORT`        | Database port                    | `5432`                |
-| `DB_USER`        | Database username                | `postgres`            |
-| `DB_NAME`        | Database name                    | `postgres`            |
+| `DB_USER`        | Database username                | `neondb_owner`        |
+| `DB_NAME`        | Database name                    | `neondb`              |
 | `DB_SSL_MODE`    | PostgreSQL SSL mode              | `require`             |
 | `ADMIN_USER`     | Listmonk admin username          | `admin`               |
 | `ADMIN_PASSWORD` | Listmonk admin password          | (set in config)       |
@@ -109,7 +109,7 @@ npm run secret:db-password
 
 | Secret       | Description                          | How to set                        |
 | ------------ | ------------------------------------ | --------------------------------- |
-| `DB_PASSWORD`| Supabase PostgreSQL password         | `wrangler secret put DB_PASSWORD` |
+| `DB_PASSWORD`| Neon PostgreSQL password             | `wrangler secret put DB_PASSWORD` |
 
 ## Error Codes
 
@@ -168,6 +168,6 @@ See `docs/COMPANION-APPS.md` for a guide to deploying these alongside Listmonk:
 - **n8n** — Workflow automation
 - **Shlink** — URL shortener
 - **Wiki.js / Outline** — Knowledge base
-- **Hasura** — GraphQL API over Supabase
+- **Hasura** — GraphQL API over Neon
 
-All follow the same Cloudflare Containers + Supabase PostgreSQL pattern.
+All follow the same Cloudflare Containers + Neon PostgreSQL pattern.
